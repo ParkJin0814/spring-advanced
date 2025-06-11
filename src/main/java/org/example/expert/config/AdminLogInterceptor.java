@@ -2,7 +2,10 @@ package org.example.expert.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.expert.domain.adminapilog.entity.AdminApiLog;
+import org.example.expert.domain.adminapilog.repository.AdminApiRepository;
 import org.example.expert.domain.user.enums.UserRole;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,11 +14,14 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Slf4j
+@AllArgsConstructor
 public class AdminLogInterceptor implements HandlerInterceptor {
-    private static final String[] WHITE_LIST = {"/admin*"};
+    private static final String[] WHITE_LIST = {"/admin/**"};
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminLogInterceptor.class);
+    private final AdminApiRepository adminApiRepository;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -35,7 +41,10 @@ public class AdminLogInterceptor implements HandlerInterceptor {
         }
 
         // 인증성공시 요청시간 URL 로깅
+        UUID uuid = UUID.randomUUID();
         LOGGER.info("REQUEST 요청시간: [{}], URL: [{}]", LocalDateTime.now(), requestURI);
+        AdminApiLog adminApiLog = new AdminApiLog(uuid, requestURI);
+        adminApiRepository.save(adminApiLog);
 
         return true;
     }
